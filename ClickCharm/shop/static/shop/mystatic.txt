@@ -1,0 +1,2 @@
+{% load static %}
+    <a href = " {%static 'blog/mystatic.txt' %}">Click me!</a>
