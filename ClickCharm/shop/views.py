@@ -24,15 +24,15 @@ def index(request):
 def about(request):
     return render(request, 'shop/about.html')
 def contact(request):
-    return render(request, 'shop/index2.html')
+    return render(request, 'shop/Contact.html')
 def tracker(request):
-    return render(request, 'shop/index.html')
+    return render(request, 'shop/tracker.html')
 def search(request):
-    return render(request, 'shop/index.html')
-def productview(request):
-    return render(request, 'shop/index.html')
+    return render(request, 'shop/search.html')
+def prodview(request):
+    return render(request, 'shop/prodview.html')
 def checkout(request):
-    return render(request, 'shop/index.html')
+    return render(request, 'shop/checkout.html')
 
 
 
