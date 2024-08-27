@@ -137,7 +137,8 @@
     document.getElementById('cart').innerHTML = Object.keys(cart).length;
    });
 
-   
+   $('#popcart').popover('show')
+    document.getElementById("popcart").setAttribute('data-content', '<h5>Cart</h5>');
  </script>
 
  {% endblock %}
