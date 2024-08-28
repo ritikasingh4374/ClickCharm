@@ -31,6 +31,8 @@ def contact(request):
         phone = request.POST.get('phone','')
         desc = request.POST.get('desc','')
         print(name, email, phone, desc)
+        contacts = contact(name=name, email=email, phone=phone, desc=desc)
+        contacts.save()
     return render(request, 'shop/Contact.html')
 def tracker(request):
     return render(request, 'shop/tracker.html')
