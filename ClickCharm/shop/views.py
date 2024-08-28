@@ -24,6 +24,8 @@ def index(request):
 def about(request):
     return render(request, 'shop/about.html')
 def contact(request):
+    if request.method == 'post':
+        print(request)
     return render(request, 'shop/Contact.html')
 def tracker(request):
     return render(request, 'shop/tracker.html')
