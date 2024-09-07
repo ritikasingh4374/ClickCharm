@@ -78,17 +78,27 @@
 
             {% for i in product %}
             <div class="col-xs-3 col-sm-3 col-md-3">
-              <div class="card align-items-center" style="width: 13rem;">
+              <div class="card" style="width: 13rem;">
                 <img src='/media/{{i.image}}' class="card-img-top" alt="...">
                 <div class="card-body">
                   <h5 class="card-title">{{i.product_name}}</h5>
                   <p class="card-text">{{i.desc|slice:"0:53"}}...</p>
-                  <span id = "divpr{{i.id}}"></span>
-                  <button id = "pr{{i.desc}}" class = "cart" class="btn btn-primary">Add to cart</button>
-                  <a href = "/shop/products/{{i.id}}"> <button id = "qv{{i.desc}}" class = "cart" class="btn btn-primary">quick view</button></a>
+            
+                  <!-- "Add to Cart" button -->
+                  <button class="add-to-cart btn btn-primary" id="add-to-cart-{{i.id}}">Add to Cart</button>
+            
+                  <!-- Plus Minus Button Section (Initially hidden) -->
+                  <div class="quantity-controls" id="quantity-controls-{{i.id}}" style="display: none;">
+                    <button class="minus btn btn-danger" id="minus-{{i.id}}">-</button>
+                    <span class="quantity" id="quantity-{{i.id}}">1</span>
+                    <button class="plus btn btn-success" id="plus-{{i.id}}">+</button>
+                  </div>
+            
+                  <a href="/shop/products/{{i.id}}"><button class="btn btn-primary">Quick View</button></a>
                 </div>
               </div>
             </div>
+            
 
             {% if forloop.counter|divisibleby:4 and forloop.counter > 0 and not forloop.last %}
              </div><div class="carousel-item">
@@ -115,45 +125,135 @@
 
  {% block js %}
 <script>
-
-//find out the cart items from the local storage 
 console.log('working');
 if(localStorage.getItem('cart') == null){
-  var cart = {};
+var cart = {};
+localStorage.setItem('cart', JSON.stringify(cart));
 }
-else{
-  cart = JSON.parse(localStorage.getItem('cart'));
-  document.getElementById('cart').innerHTML = Object.keys(cart).length;
+else
+{
+cart = JSON.parse(localStorage.getItem('cart'));
+document.getElementById('cart').innerHTML = Object.keys(cart).length;
 }
 
-//if the add to cart button is clicked, add/increment the item
-$('.cart').click(function(){
-    var idstr = this.id.toString();
-      console.log(idstr);
-      if (cart[idstr] !=undefined){
-      cart[idstr] = cart[idstr] + 1;
-      }
-      else
-      {
-      cart[idstr] = 1;
+$(document).ready(function() {
+    // Function to initialize the cart from localStorage
+    function initializeCart() {
+        var cart = JSON.parse(localStorage.getItem('cart')) || {};
+
+        // Update the cart display based on the cart object
+        updateCartDisplay(cart);
+
+        // Show or hide buttons and quantity controls based on cart state
+        for (var id in cart) {
+            $('#quantity-' + id).html(cart[id]);
+            $('#add-to-cart-' + id).hide(); // Hide the "Add to Cart" button for items already in cart
+            $('#quantity-controls-' + id).show(); // Show plus-minus controls for items already in cart
+        }
     }
-    localStorage.setItem('cart', JSON.stringify(cart));
-    document.getElementById('cart').innerHTML = Object.keys(cart).length;
+
+    // Function to update cart display
+    function updateCartDisplay(cart) {
+        var totalItems = 0;
+        for (var key in cart) {
+            totalItems += cart[key]; // Sum up all quantities
+        }
+
+        // Update the cart count in the header
+        var cartElement = document.getElementById('cart');
+        if (cartElement) {
+            cartElement.innerHTML = totalItems;
+        }
+    }
+
+    // Event listener for the "Add to Cart" button
+    $('.add-to-cart').click(function() {
+        var idstr = this.id.split('-')[3]; // Extract product ID from the button's ID
+        console.log('Add to cart clicked for product ID: ' + idstr);
+
+        // Initialize or increment the quantity in the cart
+        var cart = JSON.parse(localStorage.getItem('cart')) || {};
+        if (cart[idstr] != undefined) {
+            cart[idstr] += 1;
+        } else {
+            cart[idstr] = 1;
+        }
+
+        // Update localStorage and UI
+        localStorage.setItem('cart', JSON.stringify(cart));
+        $('#add-to-cart-' + idstr).hide();
+        $('#quantity-controls-' + idstr).show();
+        updateCartDisplay(cart);
+    });
+
+    // Event listener for the plus (+) button
+    $('.plus').click(function() {
+        var idstr = this.id.split('-')[1]; // Get product ID from button's ID
+        console.log('Plus clicked for product ID: ' + idstr);
+
+        var cart = JSON.parse(localStorage.getItem('cart')) || {};
+        if (cart[idstr] != undefined) {
+            cart[idstr] += 1;
+        }
+
+        localStorage.setItem('cart', JSON.stringify(cart));
+        $('#quantity-' + idstr).html(cart[idstr]);
+        updateCartDisplay(cart);
+    });
+
+    // Event listener for the minus (-) button
+    $('.minus').click(function() {
+        var idstr = this.id.split('-')[1]; // Get product ID from button's ID
+        console.log('Minus clicked for product ID: ' + idstr);
+
+        var cart = JSON.parse(localStorage.getItem('cart')) || {};
+        if (cart[idstr] != undefined && cart[idstr] > 0) {
+            cart[idstr] -= 1;
+        }
+
+        if (cart[idstr] == 0) {
+            delete cart[idstr];
+            $('#add-to-cart-' + idstr).show();  // Show the "Add to Cart" button
+            $('#quantity-controls-' + idstr).hide();  // Hide the plus-minus controls
+        }
+
+        localStorage.setItem('cart', JSON.stringify(cart));
+        $('#quantity-' + idstr).html(cart[idstr] != undefined ? cart[idstr] : 0);
+        updateCartDisplay(cart);
+    });
+
+    // Function to reset the UI when localStorage is cleared
+    function clearCartUI() {
+        // Hide all plus-minus buttons and reset quantities
+        $('.quantity-controls').hide();  // Hide plus-minus controls for all products
+        $('.add-to-cart').show();        // Show "Add to Cart" buttons again
+
+        // Reset the displayed quantity for all products
+        $('.quantity').html(1);
+
+        // Reset the cart count in the header
+        var cartElement = document.getElementById('cart');
+        if (cartElement) {
+            cartElement.innerHTML = 0;  // Reset cart count to 0
+        }
+    }
+
+    // Clear cart when localStorage.clear() is called manually
+    var originalClear = localStorage.clear;
+    localStorage.clear = function() {
+        originalClear.apply(this, arguments); // Call original localStorage.clear
+        clearCartUI(); // Reset UI after clearing localStorage
+    };
+
+    // Initialize cart on page load
+    initializeCart();
 });
 
-$('#popcart').popover();
-document.getElementById("popcart").setAttribute('data-content', '<h5>Cart for your items in my shopping cart</h5>');
 
 
-function updateCart(cart){
-  for(var item in cart){
 
-  }
-}
 </script>
 {% endblock %}
 
-
  
-
 
