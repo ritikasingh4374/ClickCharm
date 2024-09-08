@@ -1,14 +1,9 @@
 {% extends 'shop/basic.html' %}
-
 {% block css %}
-        body{
-            background-color : aquariousBlue;
-        }
         .col-md-3 {
             display: inline-block;
             margin-left: -4px;
         }
-
         .col-md-3 {
             width: 100%;
             height: auto;
@@ -97,6 +92,7 @@
                 <div class="card-body">
                   <h5 class="card-title">{{i.product_name}}</h5>
                   <p class="card-text">{{i.desc|slice:"0:53"}}...</p>
+                  <h5 class="card-price">Rs. {{i.price}}</h5>
             
                   <!-- "Add to Cart" button -->
                   <button class="add-to-cart btn btn-primary" id="add-to-cart-{{i.id}}">Add to Cart</button>
@@ -124,7 +120,7 @@
       </div>
 
       </div>
-        </div>
+    </div>
 
 <a class="carousel-control-prev " href="#demo{{forloop.counter}}" role="button" data-slide="prev">
    <span class="carousel-control-prev-icon" aria-hidden="true" ></span>
@@ -141,145 +137,112 @@
 
  {% block js %}
 <script>
-console.log('working');
-if(localStorage.getItem('cart') == null){
-var cart = {};
-localStorage.setItem('cart', JSON.stringify(cart));
-}
-else
-{
-cart = JSON.parse(localStorage.getItem('cart'));
-document.getElementById('cart').innerHTML = Object.keys(cart).length;
-}
-
 $(document).ready(function() {
-    // Function to initialize the cart from localStorage
+    console.log('Page loaded');
+
+    // Initialize cart from localStorage
     function initializeCart() {
         var cart = JSON.parse(localStorage.getItem('cart')) || {};
-
-        // Update the cart display based on the cart object
         updateCartDisplay(cart);
+        updateCartCount();
+    }
 
-        // Show or hide buttons and quantity controls based on cart state
+    // Update cart display based on localStorage cart
+    function updateCartDisplay(cart) {
         for (var id in cart) {
             $('#quantity-' + id).html(cart[id]);
-            $('#add-to-cart-' + id).hide(); // Hide the "Add to Cart" button for items already in cart
-            $('#quantity-controls-' + id).show(); // Show plus-minus controls for items already in cart
-        }
-    }
-    //function to clear cart
-    function clearCart(){
-        cart = JSON.parse(localStorage.getItem('cart'));
-        for(var item in cart) {
-            document.getElementById('div' + item).innerHTML = ' <button class="add-to-cart btn btn-primary" id="'+ item +'">Add to Cart</button>';
-        }
-        localStorage.clear();
-        cart = {};
-        updateCart(cart);
-    }
-
-    // Function to update cart display
-    function updateCartDisplay(cart) {
-        var totalItems = 0;
-        for (var key in cart) {
-            totalItems += cart[key]; // Sum up all quantities
-        }
-
-        // Update the cart count in the header
-        var cartElement = document.getElementById('cart');
-        if (cartElement) {
-            cartElement.innerHTML = totalItems;
+            $('#add-to-cart-' + id).hide(); // Hide "Add to Cart" button
+            $('#quantity-controls-' + id).show(); // Show quantity controls
         }
     }
 
-    // Event listener for the "Add to Cart" button
-    $('.add-to-cart').click(function() {
-        var idstr = this.id.split('-')[3]; // Extract product ID from the button's ID
-        console.log('Add to cart clicked for product ID: ' + idstr);
-
-        // Initialize or increment the quantity in the cart
+    // Update the cart count in the navbar
+    function updateCartCount() {
         var cart = JSON.parse(localStorage.getItem('cart')) || {};
-        if (cart[idstr] != undefined) {
-            cart[idstr] += 1;
-        } else {
-            cart[idstr] = 1;
-        }
+        var totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+        $('#cart').html(totalItems);
+    }
 
-        // Update localStorage and UI
+    // Function to update popover content
+    function updatePopover(cart) {
+        var popStr = "<h5> Cart for your items in my shopping cart </h5><div class='mx-2 my-2'>";
+        var i = 1;
+        for (var item in cart) {
+            var itemNameElement = document.getElementById('name' + item);
+            if (itemNameElement) {
+                popStr += `<b>${i}</b>. ${itemNameElement.innerHTML.slice(0, 19)}... Qty: ${cart[item]}<br>`;
+            } else {
+                console.warn(`Element with ID 'name${item}' not found.`);
+                popStr += `<b>${i}</b>. Item ${item} not found... Qty: ${cart[item]}<br>`;
+            }
+            i++;
+        }
+        popStr += "</div><a href='/shop/checkout'><button class='btn btn-primary' id='checkout'>Checkout</button></a> <button class='btn btn-primary' id='clearCart'>Clear Cart</button>";
+        document.getElementById('popcart').setAttribute('data-content', popStr);
+        $('#popcart').popover('show');
+    }
+
+    // Clear cart function
+    function clearCart() {
+        console.log('Clearing cart');
+        localStorage.removeItem('cart');
+        $('.add-to-cart').show(); // Show all "Add to Cart" buttons
+        $('.quantity-controls').hide(); // Hide all quantity controls
+        $('#cart').html('0'); // Update cart count to 0
+        updatePopover({}); // Update popover to show empty cart
+    }
+
+    // Update cart in localStorage and UI
+    function updateCart(cart) {
         localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartCount();
+        updatePopover(cart);
+    }
+
+    // Event listener for "Add to Cart" button
+    $(document).on('click', '.add-to-cart', function() {
+        var idstr = this.id.split('-')[3];
+        var cart = JSON.parse(localStorage.getItem('cart')) || {};
+        cart[idstr] = (cart[idstr] || 0) + 1;
+        updateCart(cart);
         $('#add-to-cart-' + idstr).hide();
         $('#quantity-controls-' + idstr).show();
-        updateCartDisplay(cart);
     });
 
-    // Event listener for the plus (+) button
-    $('.plus').click(function() {
-        var idstr = this.id.split('-')[1]; // Get product ID from button's ID
-        console.log('Plus clicked for product ID: ' + idstr);
-
+    // Event listener for plus (+) button
+    $(document).on('click', '.plus', function() {
+        var idstr = this.id.split('-')[1];
         var cart = JSON.parse(localStorage.getItem('cart')) || {};
-        if (cart[idstr] != undefined) {
-            cart[idstr] += 1;
+        if (cart[idstr] !== undefined) {
+           qty =  cart[idstr][0] += 1;
+            updateCart(cart);
+            $('#quantity-' + idstr).html(cart[idstr]);
         }
-
-        localStorage.setItem('cart', JSON.stringify(cart));
-        $('#quantity-' + idstr).html(cart[idstr]);
-        updateCartDisplay(cart);
     });
 
-    // Event listener for the minus (-) button
-    $('.minus').click(function() {
-        var idstr = this.id.split('-')[1]; // Get product ID from button's ID
-        console.log('Minus clicked for product ID: ' + idstr);
-
+    // Event listener for minus (-) button
+    $(document).on('click', '.minus', function() {
+        var idstr = this.id.split('-')[1];
         var cart = JSON.parse(localStorage.getItem('cart')) || {};
-        if (cart[idstr] != undefined && cart[idstr] > 0) {
+        if (cart[idstr] !== undefined && cart[idstr] > 1) {
             cart[idstr] -= 1;
-        }
-
-        if (cart[idstr] == 0) {
+            updateCart(cart);
+            $('#quantity-' + idstr).html(cart[idstr]);
+        } else {
             delete cart[idstr];
-            $('#add-to-cart-' + idstr).show();  // Show the "Add to Cart" button
-            $('#quantity-controls-' + idstr).hide();  // Hide the plus-minus controls
+            $('#add-to-cart-' + idstr).show(); // Show the "Add to Cart" button
+            $('#quantity-controls-' + idstr).hide(); // Hide the quantity controls
+            updateCart(cart);
         }
-
-        localStorage.setItem('cart', JSON.stringify(cart));
-        $('#quantity-' + idstr).html(cart[idstr] != undefined ? cart[idstr] : 0);
-        updateCartDisplay(cart);
     });
 
-    // Function to reset the UI when localStorage is cleared
-    function clearCartUI() {
-        // Hide all plus-minus buttons and reset quantities
-        $('.quantity-controls').hide();  // Hide plus-minus controls for all products
-        $('.add-to-cart').show();        // Show "Add to Cart" buttons again
-
-        // Reset the displayed quantity for all products
-        $('.quantity').html(1);
-
-        // Reset the cart count in the header
-        var cartElement = document.getElementById('cart');
-        if (cartElement) {
-            cartElement.innerHTML = 0;  // Reset cart count to 0
-        }
-    }
-
-    // Clear cart when localStorage.clear() is called manually
-    var originalClear = localStorage.clear;
-    localStorage.clear = function() {
-        originalClear.apply(this, arguments); // Call original localStorage.clear
-        clearCartUI(); // Reset UI after clearing localStorage
-    };
+    // Event listener for the "Clear Cart" button
+    $(document).on('click', '#clearCart', function() {
+        clearCart();
+    });
 
     // Initialize cart on page load
     initializeCart();
 });
-
-
-
-
 </script>
 {% endblock %}
-
- 
-

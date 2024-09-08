@@ -40,28 +40,18 @@
       <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
       <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
     </form>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="#">YourShop</a>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ml-auto">
-          <li class="nav-item dropdown">
-            <a class="nav-link" href="#" id="cart" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)
-            </a>
-            <div class="dropdown-menu dropdown-menu-right p-3" id="cart-dropdown" aria-labelledby="cart">
-              <h6 class="dropdown-header">Your Cart</h6>
-              <div id="cart-items">
-                <!-- Cart items will be dynamically populated here -->
-                <p class="text-center">Cart is empty</p>
-              </div>
-              <div class="dropdown-divider"></div>
-              <a href="/checkout" class="btn btn-primary btn-block">Go to Checkout</a>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </nav>
-      
+    <button type="button" class="btn btn-secondary mx-2" 
+    data-container="body" 
+    data-html="true" 
+    data-toggle="popover" 
+    data-placement="bottom" 
+    data-content='
+        <button class="btn btn-success checkout-btn">Checkout</button>
+        <button class="btn btn-danger clearcart-btn">Clear Cart</button>' 
+    id="popcart">
+    Cart(<span id="cart">0</span>)
+</button>
+
     
   </div>
   
