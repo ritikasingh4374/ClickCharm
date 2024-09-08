@@ -1,5 +1,9 @@
 {% extends 'shop/basic.html' %}
+
 {% block css %}
+        body{
+            background-color : aquariousBlue;
+        }
         .col-md-3 {
             display: inline-block;
             margin-left: -4px;
@@ -15,6 +19,16 @@
           height: 240px;
           padding : 10px;
          }
+
+         #cart-dropdown {
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #cart-items p {
+            margin: 0;
+        }
+        
 
 
 
@@ -86,7 +100,7 @@
             
                   <!-- "Add to Cart" button -->
                   <button class="add-to-cart btn btn-primary" id="add-to-cart-{{i.id}}">Add to Cart</button>
-            
+                   
                   <!-- Plus Minus Button Section (Initially hidden) -->
                   <div class="quantity-controls" id="quantity-controls-{{i.id}}" style="display: none;">
                     <button class="minus btn btn-danger" id="minus-{{i.id}}">-</button>
@@ -95,7 +109,9 @@
                   </div>
             
                   <a href="/shop/products/{{i.id}}"><button class="btn btn-primary">Quick View</button></a>
+                  
                 </div>
+                
               </div>
             </div>
             
@@ -150,6 +166,16 @@ $(document).ready(function() {
             $('#add-to-cart-' + id).hide(); // Hide the "Add to Cart" button for items already in cart
             $('#quantity-controls-' + id).show(); // Show plus-minus controls for items already in cart
         }
+    }
+    //function to clear cart
+    function clearCart(){
+        cart = JSON.parse(localStorage.getItem('cart'));
+        for(var item in cart) {
+            document.getElementById('div' + item).innerHTML = ' <button class="add-to-cart btn btn-primary" id="'+ item +'">Add to Cart</button>';
+        }
+        localStorage.clear();
+        cart = {};
+        updateCart(cart);
     }
 
     // Function to update cart display
